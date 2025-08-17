@@ -1,18 +1,20 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.core.config import settings
+import os
 
-app = FastAPI(title=settings.PROJECT_NAME)
-print("Backend started successfully!")  # Add this
+app = FastAPI(title="WeTreat Backend")
 
+# CORS configuration
+origins = ["*"]  # Adjust for production
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# Health check
 @app.get("/ping")
 def ping():
     return {"message": "pong"}
@@ -21,17 +23,24 @@ def ping():
 def health():
     return {"status": "ok"}
 
-import socket
-from fastapi import APIRouter
+# Optional: Alembic migrations on startup
+@app.on_event("startup")
+async def run_alembic_migrations():
+    try:
+        if os.getenv("RUN_MIGRATIONS", "true") == "true":
+            print("⚙️ Running Alembic migrations...")
+            from alembic import command
+            from alembic.config import Config
+            cfg = Config("alembic.ini")
+            command.upgrade(cfg, "head")
+            print("✅ Alembic migration completed.")
+    except Exception as e:
+        print("❌ Alembic migration failed:", str(e))
 
-self_test = APIRouter()
-
-@self_test.get("/selftest")
-async def selftest():
-    hostname = socket.gethostname()
-    return {
-        "status": "running",
-        "host": hostname
-    }
-
-app.include_router(self_test)
+# Include your routers here (comment out until files exist)
+# from app.api.routes import auth, intake, admin, physician, consultations
+# app.include_router(auth.router)
+# app.include_router(intake.router)
+# app.include_router(admin.router)
+# app.include_router(physician.router)
+# app.include_router(consultations.router)

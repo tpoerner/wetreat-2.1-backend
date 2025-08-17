@@ -1,46 +1,19 @@
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-import os
+import threading
+import time
+import uvicorn
 
-app = FastAPI(title="WeTreat Backend")
+app = FastAPI()
 
-# CORS configuration
-origins = ["*"]  # Adjust for production
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Health check
 @app.get("/ping")
 def ping():
     return {"message": "pong"}
 
-@app.get("/health")
-def health():
-    return {"status": "ok"}
+# Dummy background thread to keep the app alive on Railway
+def keep_alive():
+    while True:
+        time.sleep(60)
 
-# Optional: Alembic migrations on startup
-@app.on_event("startup")
-async def run_alembic_migrations():
-    try:
-        if os.getenv("RUN_MIGRATIONS", "true") == "true":
-            print("⚙️ Running Alembic migrations...")
-            from alembic import command
-            from alembic.config import Config
-            cfg = Config("alembic.ini")
-            command.upgrade(cfg, "head")
-            print("✅ Alembic migration completed.")
-    except Exception as e:
-        print("❌ Alembic migration failed:", str(e))
-
-# Include your routers here (comment out until files exist)
-# from app.api.routes import auth, intake, admin, physician, consultations
-# app.include_router(auth.router)
-# app.include_router(intake.router)
-# app.include_router(admin.router)
-# app.include_router(physician.router)
-# app.include_router(consultations.router)
+if __name__ == "__main__":
+    threading.Thread(target=keep_alive, daemon=True).start()
+    uvicorn.run("main:app", host="0.0.0.0", port=8080)

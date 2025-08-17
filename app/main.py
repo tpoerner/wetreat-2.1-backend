@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.core.config import settings
 
 app = FastAPI()
 
@@ -18,3 +19,18 @@ def ping():
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+import socket
+from fastapi import APIRouter
+
+self_test = APIRouter()
+
+@self_test.get("/selftest")
+async def selftest():
+    hostname = socket.gethostname()
+    return {
+        "status": "running",
+        "host": hostname
+    }
+
+app.include_router(self_test)

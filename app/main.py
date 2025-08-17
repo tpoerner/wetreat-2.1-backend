@@ -2,7 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 
-app = FastAPI()
+app = FastAPI(title=settings.PROJECT_NAME)
+print("Backend started successfully!")  # Add this
 
 app.add_middleware(
     CORSMiddleware,
